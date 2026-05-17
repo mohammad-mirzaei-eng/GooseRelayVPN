@@ -499,7 +499,48 @@ nano client_config.json
 
 ---
 
-## به‌روزرسانی forwarder در Apps Script
+## به‌روزرسانی
+
+فایل‌های پیکربندی forward-compatible هستند — فیلدهای جدید در `client_config.json` / `server_config.json` با مقادیر پیش‌فرض منطقی کار می‌کنند و فیلدهای قدیمی همچنان معتبرند. معمولاً نیازی به نصب از اول نیست.
+
+### سرور (Linux) — پیشنهادی
+
+اسکریپت installer را دوباره اجرا کنید و گزینهٔ **Update** را از منو انتخاب کنید:
+
+```bash
+bash <(curl -Ls https://raw.githubusercontent.com/Kianmhz/GooseRelayVPN/main/scripts/goose-server.sh)
+```
+
+یا یک‌خطی:
+
+```bash
+bash <(curl -Ls https://raw.githubusercontent.com/Kianmhz/GooseRelayVPN/main/scripts/goose-server.sh) update
+```
+
+اسکریپت نصب موجود را تشخیص می‌دهد، سرویس را متوقف می‌کند، آخرین release را دانلود می‌کند، SHA256 را در برابر `SHA256SUMS.txt` همان release بررسی می‌کند، `server_config.json` شما را دست نمی‌زند، و سرویس را restart می‌کند. اگر اول دستی نصب کرده‌اید (نه با اسکریپت)، اولین اجرا پیشنهاد می‌دهد همه چیز را به `/root/goose/` منتقل کند تا به‌روزرسانی‌های بعدی یک دستور باشند.
+
+### سرور (Windows / نصب دستی Linux)
+
+۱. سرویس را متوقف کنید (`Stop-Service goose-relay` در Windows، `sudo systemctl stop goose-relay` در Linux).
+۲. آرشیو release جدید را از [صفحه Releases](https://github.com/kianmhz/GooseRelayVPN/releases) دانلود و اکسترکت کنید.
+۳. `goose-server` / `goose-server.exe` را با نسخهٔ جدید جایگزین کنید (`server_config.json` را دست نزنید).
+۴. سرویس را restart کنید.
+
+### کلاینت (Windows / Linux / macOS / Android-Termux)
+
+۱. `goose-client` در حال اجرا را متوقف کنید.
+۲. آرشیو release جدید مخصوص پلتفرم خود را از [Releases](https://github.com/kianmhz/GooseRelayVPN/releases) دانلود کنید.
+۳. اکسترکت کنید و `goose-client` (یا `goose-client.exe`) را جایگزین کنید؛ `client_config.json` موجود را دست نزنید.
+۴. **فقط macOS** — پرچم قرنطینهٔ Gatekeeper را روی باینری جدید پاک کنید:
+   ```bash
+   xattr -d com.apple.quarantine goose-client 2>/dev/null || true
+   chmod +x goose-client
+   ```
+۵. دوباره اجرا کنید.
+
+اگر `Code.gs` را تغییر ندادید، نیازی به دست زدن به deployment Apps Script نیست — بخش زیر را ببینید.
+
+### forwarder در Apps Script
 
 اگر `Code.gs` را تغییر دادید — مثلاً برای تغییر IP VPS — باید در ویرایشگر Apps Script یک **deployment جدید** بسازید (Deploy → **New deployment**، نه فقط "Manage deployments"). صرفاً ذخیره کردن کد چیزی را عوض نمی‌کند؛ URL زنده `/exec` نسخه منتشرشده قبلی را سرو می‌کند. بعد از deploy جدید، `script_keys` را در `client_config.json` به‌روزرسانی کنید.
 

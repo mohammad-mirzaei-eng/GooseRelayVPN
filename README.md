@@ -497,11 +497,52 @@ What the client does for you automatically:
 
 ---
 
-## Updating the Apps Script forwarder
+## Updating
+
+Configs are forward-compatible — new fields in `client_config.json` / `server_config.json` default sensibly, and old fields keep working. You generally don't need to start over.
+
+### Server (Linux) — recommended
+
+Re-run the installer and pick **Update** from the menu:
+
+```bash
+bash <(curl -Ls https://raw.githubusercontent.com/Kianmhz/GooseRelayVPN/main/scripts/goose-server.sh)
+```
+
+Or in one shot:
+
+```bash
+bash <(curl -Ls https://raw.githubusercontent.com/Kianmhz/GooseRelayVPN/main/scripts/goose-server.sh) update
+```
+
+The script auto-detects the existing install, stops the service, downloads the latest release, verifies the SHA256 against the release's `SHA256SUMS.txt`, keeps your `server_config.json` untouched, and restarts. If you originally installed by hand (not via the script), the first run also offers to migrate everything to `/root/goose/` so future updates are one command.
+
+### Server (Windows / manual Linux install)
+
+1. Stop the service (`Stop-Service goose-relay` on Windows, `sudo systemctl stop goose-relay` on Linux).
+2. Download the new release archive from the [Releases page](https://github.com/kianmhz/GooseRelayVPN/releases) and extract it.
+3. Replace `goose-server` / `goose-server.exe` with the new one (keep `server_config.json` as-is).
+4. Restart the service.
+
+### Client (Windows / Linux / macOS / Android-Termux)
+
+1. Stop the running `goose-client`.
+2. Download the new release archive for your platform from [Releases](https://github.com/kianmhz/GooseRelayVPN/releases).
+3. Extract and replace `goose-client` (or `goose-client.exe`); keep your existing `client_config.json`.
+4. **macOS only** — clear the Gatekeeper quarantine on the new binary:
+   ```bash
+   xattr -d com.apple.quarantine goose-client 2>/dev/null || true
+   chmod +x goose-client
+   ```
+5. Run it again.
+
+You don't need to touch your Apps Script deployment unless you also change `Code.gs` — see below.
+
+### Apps Script forwarder
 
 If you change `Code.gs` — for example to point at a new VPS IP — you must create a **new deployment** in the Apps Script editor (Deploy → **New deployment**, not just "Manage deployments"). Saving alone does nothing; the live `/exec` URL serves the published version. After redeploying, update `script_keys` in `client_config.json`.
 
-The current `Code.gs` also tracks per-deployment invocation counts and exposes them via `doGet`, along with forwarder/protocol metadata used by the client's pre-flight check. If you have an older deployment, redeploying once enables the `script=N` field in the client's periodic `[stats]` line and avoids version-mismatch warnings.
+The current `Code.gs` tracks per-deployment invocation counts and exposes them via `doGet`, along with forwarder/protocol metadata used by the client's pre-flight check. If you have an older deployment, redeploying once enables the `script=N` field in the client's periodic `[stats]` line and avoids version-mismatch warnings.
 
 ---
 
