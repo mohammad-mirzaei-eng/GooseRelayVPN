@@ -56,12 +56,37 @@ func Serve(_ context.Context, listenAddr, user, pass string, debugTiming bool, f
 		}))
 	}
 
-	ln, err := net.Listen("tcp", listenAddr)
+	ln, err := net.Listen(listenNetwork(listenAddr), listenAddr)
 	if err != nil {
 		return err
 	}
 	server := socks5.NewServer(opts...)
 	return server.Serve(&noDelayListener{Listener: ln})
+}
+
+// listenNetwork picks the right network family for net.Listen based on the
+// literal address. Defaulting to "tcp" causes Go to bind an AF_INET6 socket
+// with V4MAPPED even for explicit IPv4 addresses like "0.0.0.0"; on Linux
+// hosts where net.ipv6.bindv6only=1, that socket then refuses IPv4
+// connections (issues #94 and #111). Forcing "tcp4" / "tcp6" when the host
+// is an IP literal sidesteps that, while leaving hostnames on "tcp" so
+// resolver-driven setups (e.g. "localhost") still work.
+func listenNetwork(addr string) string {
+	host, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		return "tcp"
+	}
+	if host == "" {
+		return "tcp" // bare ":1080" — let Go pick
+	}
+	ip := net.ParseIP(host)
+	if ip == nil {
+		return "tcp"
+	}
+	if ip.To4() != nil {
+		return "tcp4"
+	}
+	return "tcp6"
 }
 
 // noDelayListener wraps net.Listener so each accepted *net.TCPConn has both
