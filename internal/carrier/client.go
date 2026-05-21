@@ -397,7 +397,7 @@ func New(cfg Config) (*Client, error) {
 
 	idleSlotsPerBucket := cfg.IdleSlotsPerBucket
 	if idleSlotsPerBucket <= 0 {
-		idleSlotsPerBucket = 1
+		idleSlotsPerBucket = 2
 	}
 	// Single-bucket configs (one endpoint or one labeled account) need at
 	// least pureDownloadIdleCap idle slots so the gap during pollIdleSleep
