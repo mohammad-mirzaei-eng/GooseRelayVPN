@@ -78,7 +78,7 @@ func (c *Client) endpointStatsLine() string {
 		ep := &c.endpoints[i]
 		c.touchDailyWindow(ep, now)
 		today := fmt.Sprintf("today=%d", ep.dailyCount)
-		label := shortScriptKey(ep.url)
+		label := ShortScriptKey(ep.url)
 		if ep.account != "" {
 			// `@account` annotation lets the operator visually match each
 			// deployment to its account row in the accounts=[...] aggregation

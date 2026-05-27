@@ -789,10 +789,10 @@ func (c *Client) pollOnce(ctx context.Context) bool {
 				c.markEndpointFailure(endpointIdx)
 			}
 			if attempt < maxAttempts {
-				log.Printf("[carrier] relay request failed via %s (attempt %d/%d): %v; retrying alternate script", shortScriptKey(scriptURL), attempt, maxAttempts, err)
+				log.Printf("[carrier] relay request failed via %s (attempt %d/%d): %v; retrying alternate script", ShortScriptKey(scriptURL), attempt, maxAttempts, err)
 				continue
 			}
-			log.Printf("[carrier] relay request failed via %s: %v (check internet access, script_keys, and google_host)", shortScriptKey(scriptURL), err)
+			log.Printf("[carrier] relay request failed via %s: %v (check internet access, script_keys, and google_host)", ShortScriptKey(scriptURL), err)
 			time.Sleep(time.Second) // back off on transport errors
 			return false
 		}
@@ -802,7 +802,7 @@ func (c *Client) pollOnce(ctx context.Context) bool {
 		if readErr != nil {
 			c.markEndpointFailure(endpointIdx)
 			if attempt < maxAttempts {
-				log.Printf("[carrier] failed to read relay response via %s (attempt %d/%d): %v; retrying alternate script", shortScriptKey(scriptURL), attempt, maxAttempts, readErr)
+				log.Printf("[carrier] failed to read relay response via %s (attempt %d/%d): %v; retrying alternate script", ShortScriptKey(scriptURL), attempt, maxAttempts, readErr)
 				continue
 			}
 			log.Printf("[carrier] failed to read relay response: %v", readErr)
@@ -821,34 +821,34 @@ func (c *Client) pollOnce(ctx context.Context) bool {
 			case http.StatusForbidden: // 403
 				c.markEndpoint403(endpointIdx)
 				if attempt < maxAttempts {
-					log.Printf("[carrier] relay returned HTTP 403 via %s (attempt %d/%d); retrying alternate script", shortScriptKey(scriptURL), attempt, maxAttempts)
+					log.Printf("[carrier] relay returned HTTP 403 via %s (attempt %d/%d); retrying alternate script", ShortScriptKey(scriptURL), attempt, maxAttempts)
 					continue
 				}
-				log.Printf("[carrier] relay returned HTTP 403 via %s (Apps Script quota exhausted or deployment not set to 'Anyone'; quota resets at midnight Pacific — consider adding more script deployments or waiting for reset)", shortScriptKey(scriptURL))
+				log.Printf("[carrier] relay returned HTTP 403 via %s (Apps Script quota exhausted or deployment not set to 'Anyone'; quota resets at midnight Pacific — consider adding more script deployments or waiting for reset)", ShortScriptKey(scriptURL))
 			case http.StatusTooManyRequests: // 429
 				c.markEndpoint429(endpointIdx)
 				if attempt < maxAttempts {
-					log.Printf("[carrier] relay returned HTTP 429 (rate-limited) via %s (attempt %d/%d); retrying alternate script", shortScriptKey(scriptURL), attempt, maxAttempts)
+					log.Printf("[carrier] relay returned HTTP 429 (rate-limited) via %s (attempt %d/%d); retrying alternate script", ShortScriptKey(scriptURL), attempt, maxAttempts)
 					continue
 				}
-				log.Printf("[carrier] relay returned HTTP 429 (rate-limited) via %s; backing off and will retry automatically", shortScriptKey(scriptURL))
+				log.Printf("[carrier] relay returned HTTP 429 (rate-limited) via %s; backing off and will retry automatically", ShortScriptKey(scriptURL))
 			default:
 				c.markEndpointFailure(endpointIdx)
 				if attempt < maxAttempts {
-					log.Printf("[carrier] relay returned HTTP %d via %s (attempt %d/%d); retrying alternate script", resp.StatusCode, shortScriptKey(scriptURL), attempt, maxAttempts)
+					log.Printf("[carrier] relay returned HTTP %d via %s (attempt %d/%d); retrying alternate script", resp.StatusCode, ShortScriptKey(scriptURL), attempt, maxAttempts)
 					continue
 				}
-				log.Printf("[carrier] relay returned HTTP %d via %s (verify Apps Script deployment is live and access is set to Anyone)", resp.StatusCode, shortScriptKey(scriptURL))
+				log.Printf("[carrier] relay returned HTTP %d via %s (verify Apps Script deployment is live and access is set to Anyone)", resp.StatusCode, ShortScriptKey(scriptURL))
 			}
 			return false
 		}
 		if len(respBody) > maxRelayResponseBodyBytes {
 			c.markEndpointFailure(endpointIdx)
 			if attempt < maxAttempts {
-				log.Printf("[carrier] relay response too large via %s (attempt %d/%d); retrying alternate script", shortScriptKey(scriptURL), attempt, maxAttempts)
+				log.Printf("[carrier] relay response too large via %s (attempt %d/%d); retrying alternate script", ShortScriptKey(scriptURL), attempt, maxAttempts)
 				continue
 			}
-			log.Printf("[carrier] relay response too large via %s (%d bytes > %d); dropping batch to protect stability", shortScriptKey(scriptURL), len(respBody), maxRelayResponseBodyBytes)
+			log.Printf("[carrier] relay response too large via %s (%d bytes > %d); dropping batch to protect stability", ShortScriptKey(scriptURL), len(respBody), maxRelayResponseBodyBytes)
 			rollbackPending = false // request reached the server; we just can't ingest the response
 			return len(frames) > 0
 		}
@@ -860,13 +860,13 @@ func (c *Client) pollOnce(ctx context.Context) bool {
 				c.markEndpointFailure(endpointIdx)
 			}
 			if attempt < maxAttempts {
-				log.Printf("[carrier] relay returned non-batch payload via %s (attempt %d/%d); retrying alternate script", shortScriptKey(scriptURL), attempt, maxAttempts)
+				log.Printf("[carrier] relay returned non-batch payload via %s (attempt %d/%d); retrying alternate script", ShortScriptKey(scriptURL), attempt, maxAttempts)
 				continue
 			}
 			if errReason != "" {
-				log.Printf("[carrier] relay returned non-batch payload via %s: %s", shortScriptKey(scriptURL), errReason)
+				log.Printf("[carrier] relay returned non-batch payload via %s: %s", ShortScriptKey(scriptURL), errReason)
 			} else {
-				log.Printf("[carrier] relay returned non-batch payload via %s (likely HTML/JSON error page), dropping response", shortScriptKey(scriptURL))
+				log.Printf("[carrier] relay returned non-batch payload via %s (likely HTML/JSON error page), dropping response", ShortScriptKey(scriptURL))
 			}
 			return len(frames) > 0
 		}
@@ -875,10 +875,10 @@ func (c *Client) pollOnce(ctx context.Context) bool {
 		if decodeErr != nil {
 			c.markEndpointFailure(endpointIdx)
 			if attempt < maxAttempts {
-				log.Printf("[carrier] relay response was invalid via %s (attempt %d/%d): %v; retrying alternate script", shortScriptKey(scriptURL), attempt, maxAttempts, decodeErr)
+				log.Printf("[carrier] relay response was invalid via %s (attempt %d/%d): %v; retrying alternate script", ShortScriptKey(scriptURL), attempt, maxAttempts, decodeErr)
 				continue
 			}
-			log.Printf("[carrier] relay response was invalid via %s (possibly HTML/error page instead of encrypted data): %v", shortScriptKey(scriptURL), decodeErr)
+			log.Printf("[carrier] relay response was invalid via %s (possibly HTML/error page instead of encrypted data): %v", ShortScriptKey(scriptURL), decodeErr)
 			rollbackPending = false // Apps Script returned a normal-looking 200; the exit server most likely processed the batch even though we can't ingest the response
 			return len(frames) > 0
 		}
@@ -893,7 +893,7 @@ func (c *Client) pollOnce(ctx context.Context) bool {
 		countFrameBytes(&c.stats.framesIn, &c.stats.bytesIn, rxFrames)
 		if c.debugTiming {
 			log.Printf("[timing] poll rtt=%dms tx_frames=%d rx_frames=%d resp_bytes=%d via %s",
-				time.Since(pollStart).Milliseconds(), len(frames), len(rxFrames), len(respBody), shortScriptKey(scriptURL))
+				time.Since(pollStart).Milliseconds(), len(frames), len(rxFrames), len(respBody), ShortScriptKey(scriptURL))
 		}
 		return len(frames) > 0 || len(rxFrames) > 0
 	}
@@ -1037,7 +1037,7 @@ func (c *Client) markEndpointSuccess(endpointIdx int) {
 	ep.localNetworkOffline = false
 	c.endpointMu.Unlock()
 	if wasFailing {
-		log.Printf("[carrier] endpoint %s recovered (back in rotation)", shortScriptKey(url))
+		log.Printf("[carrier] endpoint %s recovered (back in rotation)", ShortScriptKey(url))
 	}
 }
 
@@ -1064,7 +1064,7 @@ func (c *Client) markEndpointLocalNetworkFailure(endpointIdx int) {
 	c.endpointMu.Unlock()
 	if wasHealthy {
 		log.Printf("[carrier] endpoint %s local network offline; retrying in %s (still rotating across %d others)",
-			shortScriptKey(url), localNetworkOfflineBlacklistTTL.Round(time.Second), peerCount)
+			ShortScriptKey(url), localNetworkOfflineBlacklistTTL.Round(time.Second), peerCount)
 	}
 }
 
@@ -1116,12 +1116,12 @@ func (c *Client) markEndpointFailureWith(endpointIdx, minFailCount int) {
 	// of an already-blacklisted endpoint would be log noise.
 	if wasHealthy {
 		log.Printf("[carrier] endpoint %s blacklisted for %s (still rotating across %d others)",
-			shortScriptKey(url), ttl.Round(100*time.Millisecond), len(c.endpoints)-1)
+			ShortScriptKey(url), ttl.Round(100*time.Millisecond), len(c.endpoints)-1)
 	} else if failCount == 8 {
 		// Notify once when an endpoint reaches hour-scale backoff so the operator
 		// knows this deployment is likely quota-exhausted or dead.
 		log.Printf("[carrier] endpoint %s repeatedly failing (%d consecutive); now at extended backoff (%s). Consider re-deploying that script.",
-			shortScriptKey(url), failCount, ttl.Round(time.Second))
+			ShortScriptKey(url), failCount, ttl.Round(time.Second))
 	}
 }
 
@@ -1508,7 +1508,13 @@ func classifyRelayErrorBody(body []byte) (reason string, hard bool) {
 	return "", false
 }
 
-func shortScriptKey(scriptURL string) string {
+// ShortScriptKey returns a human-readable abbreviation of an Apps Script /exec
+// URL suitable for log lines. For canonical script.google.com URLs the long
+// Deployment ID is truncated to "AKfycb...XXXXXX"; for direct relay URLs (when
+// fronting is off) it falls back to the host. Used by cmd/client startup logs
+// and by every [carrier] log line so the operator can tell endpoints apart
+// without leaking the full Deployment ID.
+func ShortScriptKey(scriptURL string) string {
 	parts := strings.Split(strings.Trim(scriptURL, "/"), "/")
 	for i := 0; i < len(parts)-1; i++ {
 		if parts[i] == "s" {
@@ -1519,5 +1525,8 @@ func shortScriptKey(scriptURL string) string {
 			return id
 		}
 	}
-	return "(unknown)"
+	if len(parts) >= 3 {
+		return parts[2] // direct relay URL: fall back to host
+	}
+	return scriptURL
 }

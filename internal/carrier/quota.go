@@ -215,5 +215,5 @@ func (c *Client) logScriptStatsParseErrorOnce(idx int, url string, body []byte) 
 		snippet = snippet[:80] + "..."
 	}
 	log.Printf("[carrier] script stats unavailable for %s — redeploy apps_script/Code.gs to enable per-deployment count reporting (got: %q)",
-		shortScriptKey(url), snippet)
+		ShortScriptKey(url), snippet)
 }

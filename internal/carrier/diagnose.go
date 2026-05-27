@@ -46,24 +46,24 @@ func (c *Client) Diagnose(ctx context.Context) error {
 	_ = getResp.Body.Close()
 
 	if getResp.StatusCode == http.StatusNotFound {
-		return fmt.Errorf("deployment %s returned HTTP 404 — the Deployment ID in script_keys is wrong, the deployment was deleted, or the Web App was never published. Re-deploy with Deploy → New deployment, then update script_keys", shortScriptKey(scriptURL))
+		return fmt.Errorf("deployment %s returned HTTP 404 — the Deployment ID in script_keys is wrong, the deployment was deleted, or the Web App was never published. Re-deploy with Deploy → New deployment, then update script_keys", ShortScriptKey(scriptURL))
 	}
 	if bytes.Contains(bytes.ToLower(getBody), []byte("<html")) {
-		return fmt.Errorf("deployment %s is not public (Apps Script returned HTML instead of the forwarder).\n  Fix: Deploy → Manage deployments → edit → set 'Who has access' to 'Anyone' and re-deploy", shortScriptKey(scriptURL))
+		return fmt.Errorf("deployment %s is not public (Apps Script returned HTML instead of the forwarder).\n  Fix: Deploy → Manage deployments → edit → set 'Who has access' to 'Anyone' and re-deploy", ShortScriptKey(scriptURL))
 	}
 	trimmed := bytes.TrimSpace(getBody)
 	var stats scriptStatsResponse
 	if len(trimmed) > 0 && trimmed[0] == '{' && json.Unmarshal(trimmed, &stats) == nil && stats.OK {
 		if stats.Version == 0 || stats.Protocol == 0 {
-			return fmt.Errorf("apps script deployment %s is outdated (missing version info).\n  Fix: redeploy apps_script/Code.gs and update script_keys", shortScriptKey(scriptURL))
+			return fmt.Errorf("apps script deployment %s is outdated (missing version info).\n  Fix: redeploy apps_script/Code.gs and update script_keys", ShortScriptKey(scriptURL))
 		}
 		if stats.Protocol != protocol.ProtocolVersion {
 			return fmt.Errorf("apps script protocol mismatch: script=%d client=%d.\n  Fix: redeploy apps_script/Code.gs", stats.Protocol, protocol.ProtocolVersion)
 		}
 	} else if bytes.Contains(getBody, []byte("GooseRelay")) {
-		return fmt.Errorf("apps script deployment %s is outdated (legacy text response).\n  Fix: redeploy apps_script/Code.gs and update script_keys", shortScriptKey(scriptURL))
+		return fmt.Errorf("apps script deployment %s is outdated (legacy text response).\n  Fix: redeploy apps_script/Code.gs and update script_keys", ShortScriptKey(scriptURL))
 	} else {
-		return fmt.Errorf("unexpected response from apps script %s (HTTP %d): %s", shortScriptKey(scriptURL), getResp.StatusCode, snippet(getBody))
+		return fmt.Errorf("unexpected response from apps script %s (HTTP %d): %s", ShortScriptKey(scriptURL), getResp.StatusCode, snippet(getBody))
 	}
 
 	// --- Probe 2: POST an encrypted probe frame to verify VPS reachability and AES key. ---

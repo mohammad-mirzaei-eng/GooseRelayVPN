@@ -77,23 +77,6 @@ func setupClientLogging() {
 	log.SetOutput(&clientLogWriter{out: os.Stdout, useColor: useColor})
 }
 
-func shortScriptKey(scriptURL string) string {
-	parts := strings.Split(strings.Trim(scriptURL, "/"), "/")
-	for i := 0; i < len(parts)-1; i++ {
-		if parts[i] == "s" {
-			id := parts[i+1]
-			if len(id) > 14 {
-				return id[:6] + "..." + id[len(id)-6:]
-			}
-			return id
-		}
-	}
-	if len(parts) >= 3 {
-		return parts[2]
-	}
-	return scriptURL
-}
-
 func summarizeScriptURLs(scriptURLs []string) string {
 	if len(scriptURLs) == 0 {
 		return "(none)"
@@ -104,7 +87,7 @@ func summarizeScriptURLs(scriptURLs []string) string {
 	}
 	parts := make([]string, 0, maxShown)
 	for i := 0; i < maxShown; i++ {
-		parts = append(parts, shortScriptKey(scriptURLs[i]))
+		parts = append(parts, carrier.ShortScriptKey(scriptURLs[i]))
 	}
 	if len(scriptURLs) > maxShown {
 		parts = append(parts, fmt.Sprintf("+%d more", len(scriptURLs)-maxShown))
