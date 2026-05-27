@@ -556,6 +556,10 @@ The current `Code.gs` tracks per-deployment invocation counts and exposes them v
 
 ## Architecture
 
+> For a deeper walk-through — wire format, package layout, and the
+> rationale behind each non-obvious design decision — see
+> [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ```
 ┌─────────┐   ┌──────────────┐   ┌──────────────┐   ┌─────────────┐   ┌──────────┐
 │ Browser │──►│ goose-client │──►│ Google edge  │──►│ Apps Script │──►│  Your    │──► Internet
