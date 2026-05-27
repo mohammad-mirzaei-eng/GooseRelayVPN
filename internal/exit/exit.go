@@ -41,18 +41,12 @@ const (
 	// keep this comfortably below that.
 	LongPollWindow = 8 * time.Second
 
-	// MaxFramePayload caps the bytes per downstream frame (matches carrier).
-	// Raised from 128KB: single-seal means no per-frame crypto cost, so fewer
-	// larger frames are strictly better (less length-prefix overhead, fewer
-	// Unmarshal calls). Must match the value in internal/carrier/client.go.
-	MaxFramePayload = 256 * 1024
-
 	// upstreamReadBuf is the chunk size for reading from real net.Conn before
-	// pushing to session.EnqueueTx (which then chunks into frames). Matches
-	// MaxFramePayload so a single TCP read fills exactly one max-sized frame:
-	// halves the frames-per-MB count on bulk downloads vs. 128KB, which cuts
+	// pushing to session.EnqueueTx (which then chunks into frames). Tied to
+	// protocol.MaxFramePayload so a single TCP read fills exactly one max-sized
+	// frame — halves the frames-per-MB count on bulk downloads, which cuts
 	// length-prefix and Unmarshal overhead on the receiving carrier.
-	upstreamReadBuf = 256 * 1024
+	upstreamReadBuf = protocol.MaxFramePayload
 
 	// coalesceWindow lets us gather a few more frames before responding, which
 	// improves throughput for video streams under higher RTT links.
@@ -61,9 +55,9 @@ const (
 	// coalesceWindowBusy is used when many sessions are active concurrently:
 	// under high fan-out the next batch fills within a few ms, so 25ms of
 	// extra accumulation is pure tail latency. Only applied when a) the
-	// session count is above busySessionThreshold and b) the current batch
-	// is not already large (>= maxDrainFramesPerBatch/2) — large batches
-	// are bulk-dominant and benefit more from full coalesce.
+	// session count is above protocol.BusySessionThreshold and b) the current
+	// batch is not already large (>= protocol.MaxDrainFramesPerBatch/2) —
+	// large batches are bulk-dominant and benefit more from full coalesce.
 	coalesceWindowBusy = 10 * time.Millisecond
 
 	// coalesceMinFrames is the minimum number of frames in a drain before we
@@ -71,19 +65,6 @@ const (
 	// almost certainly interactive (TLS handshake, HTTP control frames) and
 	// adding 25ms per hop compounds visibly across round-trips.
 	coalesceMinFrames = 4
-
-	// maxDrainFramesPerSession keeps one hot session from dominating an entire
-	// response batch when many interactive sessions are active concurrently.
-	maxDrainFramesPerSession = 8
-
-	// maxDrainFramesPerBatch bounds total frames emitted in one HTTP response so
-	// one poll does not become a very large base64 body under high concurrency.
-	maxDrainFramesPerBatch = 48
-
-	// Under high fan-out (mobile apps opening many parallel connections), allow
-	// a larger but still bounded batch to reduce queueing delay.
-	busySessionThreshold       = 24
-	maxDrainFramesPerBatchBusy = 144
 
 	// maxResponseBytesPreEncode bounds the total payload bytes packed into one
 	// HTTP response, before AES-GCM seal and base64. Apps Script's UrlFetchApp
@@ -475,7 +456,7 @@ func (s *Server) coalesceDuration(currentFrames int) time.Duration {
 	s.mu.Lock()
 	sessionCount := len(s.sessions)
 	s.mu.Unlock()
-	if sessionCount >= busySessionThreshold && currentFrames < maxDrainFramesPerBatch/2 {
+	if sessionCount >= protocol.BusySessionThreshold && currentFrames < protocol.MaxDrainFramesPerBatch/2 {
 		return coalesceWindowBusy
 	}
 	return coalesceWindow
@@ -552,7 +533,7 @@ func (s *Server) queueRST(owner [frame.ClientIDLen]byte, sessionID [frame.Sessio
 }
 
 func (s *Server) queueVersionResponse(owner [frame.ClientIDLen]byte, sessionID [frame.SessionIDLen]byte) {
-	payload, err := protocol.EncodeVersionInfo(s.version, MaxFramePayload, []string{"zstd", "raw_base64"})
+	payload, err := protocol.EncodeVersionInfo(s.version, protocol.MaxFramePayload, []string{"zstd", "raw_base64"})
 	if err != nil {
 		payload = []byte("{\"ok\":false}")
 	}
@@ -701,9 +682,9 @@ func (s *Server) drainAll(owner [frame.ClientIDLen]byte, byteBudget int) ([]*fra
 		delete(s.pendingRSTs, owner)
 		urgent = true // RSTs are always urgent — client should know immediately
 	}
-	batchCap := maxDrainFramesPerBatch
-	if len(s.sessions) >= busySessionThreshold {
-		batchCap = maxDrainFramesPerBatchBusy
+	batchCap := protocol.MaxDrainFramesPerBatch
+	if len(s.sessions) >= protocol.BusySessionThreshold {
+		batchCap = protocol.MaxDrainFramesPerBatchBusy
 	}
 	remaining := batchCap
 	remainingBytes := byteBudget
@@ -738,11 +719,11 @@ func (s *Server) drainAll(owner [frame.ClientIDLen]byte, byteBudget int) ([]*fra
 			delete(s.txReady, id)
 			continue
 		}
-		perSessionCap := maxDrainFramesPerSession
+		perSessionCap := protocol.MaxDrainFramesPerSession
 		if remaining < perSessionCap {
 			perSessionCap = remaining
 		}
-		maxPayload := MaxFramePayload
+		maxPayload := protocol.MaxFramePayload
 		if _, isFirst := s.firstReply[id]; isFirst && perSessionCap > 0 {
 			firstPayload := (s.initialResponseBytesPreEncode + perSessionCap - 1) / perSessionCap
 			if firstPayload > 0 && firstPayload < maxPayload {

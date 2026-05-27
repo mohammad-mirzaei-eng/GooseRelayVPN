@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/kianmhz/GooseRelayVPN/internal/frame"
+	"github.com/kianmhz/GooseRelayVPN/internal/protocol"
 	"github.com/kianmhz/GooseRelayVPN/internal/session"
 )
 
@@ -441,7 +442,7 @@ func TestDialSuppressionExpiry(t *testing.T) {
 func TestDrainAll_RespectsBatchFrameCap(t *testing.T) {
 	t.Run("normal_cap", func(t *testing.T) {
 		s := mustExitTimingServer(t)
-		total := busySessionThreshold - 1
+		total := protocol.BusySessionThreshold - 1
 		if total <= 0 {
 			total = 1
 		}
@@ -460,8 +461,8 @@ func TestDrainAll_RespectsBatchFrameCap(t *testing.T) {
 		}
 		frames, _ := s.drainAll(owner, maxResponseBytesPreEncode)
 		expected := total
-		if expected > maxDrainFramesPerBatch {
-			expected = maxDrainFramesPerBatch
+		if expected > protocol.MaxDrainFramesPerBatch {
+			expected = protocol.MaxDrainFramesPerBatch
 		}
 		if len(frames) != expected {
 			t.Fatalf("expected %d frames, got %d", expected, len(frames))
@@ -470,9 +471,9 @@ func TestDrainAll_RespectsBatchFrameCap(t *testing.T) {
 
 	t.Run("busy_cap", func(t *testing.T) {
 		s := mustExitTimingServer(t)
-		total := maxDrainFramesPerBatchBusy * 2
-		if total < busySessionThreshold+1 {
-			total = busySessionThreshold + 1
+		total := protocol.MaxDrainFramesPerBatchBusy * 2
+		if total < protocol.BusySessionThreshold+1 {
+			total = protocol.BusySessionThreshold + 1
 		}
 		for i := 0; i < total; i++ {
 			id := benchSessionID(i + 500)
@@ -488,8 +489,8 @@ func TestDrainAll_RespectsBatchFrameCap(t *testing.T) {
 			s.sessionOwners[id] = owner
 		}
 		frames, _ := s.drainAll(owner, maxResponseBytesPreEncode)
-		if len(frames) != maxDrainFramesPerBatchBusy {
-			t.Fatalf("expected busy cap %d frames, got %d", maxDrainFramesPerBatchBusy, len(frames))
+		if len(frames) != protocol.MaxDrainFramesPerBatchBusy {
+			t.Fatalf("expected busy cap %d frames, got %d", protocol.MaxDrainFramesPerBatchBusy, len(frames))
 		}
 	})
 }
@@ -507,11 +508,11 @@ func TestDrainAll_RespectsBatchFrameCap(t *testing.T) {
 // max-sized frame past the budget = ~256KB slack).
 func TestDrainAll_RespectsByteBudget(t *testing.T) {
 	s := mustExitTimingServer(t)
-	// Enough sessions to cross busySessionThreshold AND to provide more
+	// Enough sessions to cross BusySessionThreshold AND to provide more
 	// total bytes than the budget. Each session contributes one full
 	// MaxFramePayload-sized frame on drain.
-	totalSessions := busySessionThreshold + maxDrainFramesPerBatchBusy
-	chunk := bytes.Repeat([]byte("x"), MaxFramePayload)
+	totalSessions := protocol.BusySessionThreshold + protocol.MaxDrainFramesPerBatchBusy
+	chunk := bytes.Repeat([]byte("x"), protocol.MaxFramePayload)
 
 	var owner [frame.ClientIDLen]byte
 	owner[0] = 0x42
@@ -538,11 +539,11 @@ func TestDrainAll_RespectsByteBudget(t *testing.T) {
 	// so the worst-case overshoot is one session's perSessionCap of
 	// max-sized frames. Allow that slack; the goal is "stays under client
 	// cap (32MB)", not "exact match".
-	maxAllowed := maxResponseBytesPreEncode + maxDrainFramesPerSession*MaxFramePayload
+	maxAllowed := maxResponseBytesPreEncode + protocol.MaxDrainFramesPerSession*protocol.MaxFramePayload
 	if totalBytes > maxAllowed {
 		t.Fatalf("response bytes = %d, want ≤ %d (budget=%d, slack=%d)",
 			totalBytes, maxAllowed, maxResponseBytesPreEncode,
-			maxDrainFramesPerSession*MaxFramePayload)
+			protocol.MaxDrainFramesPerSession*protocol.MaxFramePayload)
 	}
 
 	// And under the carrier client's 32MB cap, with margin for base64 (1.33×)

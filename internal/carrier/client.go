@@ -19,16 +19,11 @@ import (
 	"time"
 
 	"github.com/kianmhz/GooseRelayVPN/internal/frame"
+	"github.com/kianmhz/GooseRelayVPN/internal/protocol"
 	"github.com/kianmhz/GooseRelayVPN/internal/session"
 )
 
 const (
-	// MaxFramePayload caps the bytes per frame; larger writes are chunked.
-	// Raised from 128KB: single-seal means no per-frame crypto cost, so fewer
-	// larger frames are strictly better (less length-prefix overhead, fewer
-	// Unmarshal calls). Must match the value in internal/exit/exit.go.
-	MaxFramePayload = 256 * 1024
-
 	// pollIdleSleep is the breather between polls when nothing is happening.
 	// 10ms instead of 50ms: keeps workers responsive to kick() misses and
 	// idle-slot retry at negligible CPU cost at true idle. Adaptive backoff
@@ -46,19 +41,6 @@ const (
 	// pollTimeout is the per-request HTTP ceiling; should comfortably exceed
 	// the server's long-poll window (~25s).
 	pollTimeout = 120 * time.Second
-
-	// maxDrainFramesPerSession keeps one busy session from monopolizing a poll
-	// cycle when many short-lived sessions are active (e.g., chat apps).
-	maxDrainFramesPerSession = 8
-
-	// maxDrainFramesPerBatch bounds total frames sent in one poll request so
-	// very high session fan-out does not create oversized POST bodies.
-	maxDrainFramesPerBatch = 48
-
-	// Under high fan-out (mobile apps opening many parallel connections), allow
-	// a larger but still bounded batch to reduce queueing delay.
-	busySessionThreshold       = 24
-	maxDrainFramesPerBatchBusy = 144
 
 	// Hard cap for one relay response body to avoid spending CPU/memory on
 	// unexpectedly huge non-frame payloads (HTML error pages, quota pages, etc).
@@ -1148,9 +1130,9 @@ func (c *Client) drainAll() ([]*frame.Frame, [][frame.SessionIDLen]byte, map[[fr
 	var out []*frame.Frame
 	var drainedIDs [][frame.SessionIDLen]byte
 	snaps := map[[frame.SessionIDLen]byte]*session.DrainSnapshot{}
-	batchCap := maxDrainFramesPerBatch
-	if len(c.sessions) >= busySessionThreshold {
-		batchCap = maxDrainFramesPerBatchBusy
+	batchCap := protocol.MaxDrainFramesPerBatch
+	if len(c.sessions) >= protocol.BusySessionThreshold {
+		batchCap = protocol.MaxDrainFramesPerBatchBusy
 	}
 	remaining := batchCap
 
@@ -1186,11 +1168,11 @@ func (c *Client) drainAll() ([]*frame.Frame, [][frame.SessionIDLen]byte, map[[fr
 		if synOnly && !s.HasPendingSYN() {
 			return
 		}
-		perSessionCap := maxDrainFramesPerSession
+		perSessionCap := protocol.MaxDrainFramesPerSession
 		if remaining < perSessionCap {
 			perSessionCap = remaining
 		}
-		frames, snap := s.DrainTxLimitedTxn(MaxFramePayload, perSessionCap)
+		frames, snap := s.DrainTxLimitedTxn(protocol.MaxFramePayload, perSessionCap)
 		delete(c.txReady, id) // remove now; OnTx re-adds if more data arrives
 		if len(frames) == 0 {
 			return
