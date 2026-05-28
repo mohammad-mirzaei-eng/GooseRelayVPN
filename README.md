@@ -1,6 +1,13 @@
 # GooseRelayVPN
 
 [![GitHub](https://img.shields.io/badge/GitHub-GooseRelayVPN-blue?logo=github)](https://github.com/kianmhz/GooseRelayVPN)
+[![Latest release](https://img.shields.io/github/v/release/kianmhz/GooseRelayVPN?logo=github&color=blue)](https://github.com/kianmhz/GooseRelayVPN/releases/latest)
+[![CI](https://img.shields.io/github/actions/workflow/status/kianmhz/GooseRelayVPN/ci.yml?branch=main&label=CI&logo=github)](https://github.com/kianmhz/GooseRelayVPN/actions/workflows/ci.yml)
+[![Go](https://img.shields.io/github/go-mod/go-version/kianmhz/GooseRelayVPN?logo=go&color=00ADD8)](https://go.dev)
+[![License](https://img.shields.io/github/license/kianmhz/GooseRelayVPN?color=blue)](LICENSE)
+[![Platforms](https://img.shields.io/badge/platforms-linux%20%7C%20macos%20%7C%20windows%20%7C%20android-blue)](https://github.com/kianmhz/GooseRelayVPN/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/kianmhz/GooseRelayVPN/total?logo=github&label=downloads&color=blue)](https://github.com/kianmhz/GooseRelayVPN/releases)
+[![Stars](https://img.shields.io/github/stars/kianmhz/GooseRelayVPN?logo=github&color=blue)](https://github.com/kianmhz/GooseRelayVPN/stargazers)
 
 **[🇮🇷 راهنمای فارسی (Persian)](README_FA.md)**
 

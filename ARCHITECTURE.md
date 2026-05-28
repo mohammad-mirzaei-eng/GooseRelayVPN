@@ -175,10 +175,7 @@ bench/                          loopback bench harness (Apps Script bypassed)
 
 ---
 
-## Engineering decisions worth knowing
-
-If an interviewer asks about decision X, the code for it lives in the
-file linked here.
+## Engineering decisions
 
 ### Single-seal-per-batch encoding
 
