@@ -35,41 +35,27 @@
 
 > ⚠️ **برای سرور خروجی به یک VPS کوچک نیاز دارید.** برخلاف پراکسی‌های صرفاً Apps Script، این پروژه TCP خام را تونل می‌کند — هر چیزی که SOCKS5 حمل می‌کند — پس یک `net.Dial` واقعی باید جایی انجام شود. یک VPS ارزان حدود ۴ دلار در ماه کافی است. در عوض می‌توانید SSH، IMAP و هر پروتکل دلخواه را تونل کنید — نه فقط HTTP.
 
-## حمایت از پروژه
+<details>
+<summary><b>📖 فهرست مطالب</b></summary>
 
-اگر این پروژه را دوست دارید، لطفاً با ستاره دادن در GitHub (⭐) از آن حمایت کنید. این کار باعث دیده شدن پروژه می‌شود.
+- [نحوه کار](#نحوه-کار)
+- [راهنمای راه‌اندازی مرحله‌به‌مرحله](#راهنمای-راه‌اندازی-مرحله‌به‌مرحله)
+- [اشتراک‌گذاری LAN (اختیاری)](#اشتراک‌گذاری-lan-اختیاری)
+- [افزایش ظرفیت با چند deployment (پیشنهاد می‌شود)](#افزایش-ظرفیت-با-چند-deployment-پیشنهاد-می‌شود)
+- [پیکربندی](#پیکربندی)
+- [به‌روزرسانی](#به‌روزرسانی)
+- [معماری](#معماری)
+- [مدل تهدید](#مدل-تهدید)
+- [فایل‌های پروژه](#فایل‌های-پروژه)
+- [رفع مشکل](#رفع-مشکل)
+- [نکات امنیتی](#نکات-امنیتی)
+- [مشارکت در توسعه](#مشارکت-در-توسعه)
+- [حمایت از پروژه](#حمایت-از-پروژه)
+- [سلب مسئولیت](#سلب-مسئولیت)
+- [Special Thanks](#special-thanks)
+- [License](#license)
 
-اگر تمایل دارید، می‌توانید به صورت مالی هم حمایت کنید:
-
-- TRX / USDT TRC20:
-  `TSxg2WAXYnkoR2UiUTzCxbmqNARAt91aqB`
-- BNB / USDT BEP20:
-  `0xe7b48d8fd5fbbb4e3fa9a06723a62a88585139ea`
-- TON:
-  `UQDBzJqzJ5e7uZFPrmarTRSGGbD1UoFK2q5_jWh4D2nnNdUB`
-
-## نکات مهم
-
-- هرگز `tunnel_key` را با کسی به اشتراک نگذارید. هر کسی این کلید را داشته باشد می‌تواند مثل شما از تونل/VPS استفاده کند.
-- داشتن یک سرور با دسترسی اینترنت عمومی الزامی است. سرور خروجی باید از سمت Google Apps Script قابل دسترسی باشد.
-- هر اکانت گوگل روی Apps Script رایگان حدود ۲۰٬۰۰۰ فراخوانی UrlFetch در روز سهمیه دارد (سهمیه بین همهٔ deploymentهای زیر یک اکانت **مشترک** است، نه per-deployment). این سهمیه نیمه‌شب Pacific ریست می‌شود — یعنی حدود ۱۰:۳۰ صبح به وقت ایران در تابستان و ۱۱:۳۰ صبح در زمستان.
-- در این پروژه نیازی به نصب گواهی MITM محلی ندارید. تنظیمات گواهی در `MasterHttpRelayVPN` مخصوص معماری همان پروژه است و اینجا لازم نیست.
-- این پروژه از ایده مخزن اصلی الهام گرفته است: https://github.com/masterking32/MasterHttpRelayVPN
-
----
-
-## سلب مسئولیت
-
-GooseRelayVPN فقط برای اهداف آموزشی، تست و پژوهش ارائه شده است.
-
-- **بدون ضمانت:** این نرم‌افزار به‌صورت "همان‌گونه که هست" ارائه می‌شود و هیچ ضمانت صریح یا ضمنی، از جمله قابلیت فروش، مناسب بودن برای هدف خاص یا عدم نقض حقوق دیگران، برای آن وجود ندارد.
-- **محدودیت مسئولیت:** توسعه‌دهندگان و مشارکت‌کنندگان مسئول هیچ خسارت مستقیم، غیرمستقیم، اتفاقی، تبعی یا هر نوع خسارت ناشی از استفاده از این پروژه نیستند.
-- **مسئولیت کاربر:** اجرای این پروژه خارج از محیط‌های کنترل‌شده ممکن است بر شبکه‌ها، حساب‌ها یا سیستم‌های متصل اثر بگذارد. تمام مسئولیت نصب، پیکربندی و استفاده بر عهده کاربر است.
-- **رعایت قوانین:** پیش از استفاده، رعایت تمام قوانین محلی، کشوری و بین‌المللی بر عهده کاربر است.
-- **رعایت قوانین گوگل:** اگر از Google Apps Script در این پروژه استفاده می‌کنید، رعایت Terms of Service گوگل، قوانین استفاده مجاز، سهمیه‌ها و سیاست‌های پلتفرم بر عهده شماست. سوءاستفاده ممکن است باعث تعلیق حساب گوگل یا deployment شما شود.
-- **شرایط مجوز:** استفاده، کپی، توزیع و تغییر فقط تحت شرایط مجوز مخزن مجاز است. هر استفاده خارج از آن شرایط ممنوع است.
-
----
+</details>
 
 ## نحوه کار
 
@@ -84,6 +70,8 @@ Browser/App
 ```
 
 اپلیکیشن شما بایت‌های TCP را از طریق شنونده SOCKS5 روی کامپیوترتان به این ابزار می‌فرستد. کلاینت هر تکه را با AES-256-GCM رمز می‌کند و batchها را روی یک ارتباط HTTPS با domain fronting برای وب اپ Apps Script شما POST می‌کند. Apps Script یک اسکریپت ~۳۰ خطی است که بدنه را بدون تغییر به VPS شما فوروارد می‌کند — هرگز رمزگشایی نمی‌کند و کلید AES هرگز به گوگل نمی‌رسد. VPS رمزگشایی می‌کند، مقصد واقعی را دایل می‌کند و بایت‌ها را در همان مسیر برمی‌گرداند. فیلتر فقط TLS به گوگل می‌بیند.
+
+> **سهمیهٔ روزانهٔ Apps Script.** هر اکانت گوگل روی Apps Script رایگان حدود ۲۰٬۰۰۰ فراخوانی UrlFetch در روز سهمیه دارد — این سهمیه بین همهٔ deploymentهای زیر یک اکانت **مشترک** است، نه per-deployment. سهمیه نیمه‌شب Pacific ریست می‌شود — یعنی حدود ۱۰:۳۰ صبح به وقت ایران در تابستان و ۱۱:۳۰ صبح در زمستان. فشرده‌سازی Zstd در کلاینت بیشترین کشش را به این سهمیه می‌دهد.
 
 ---
 
@@ -122,7 +110,7 @@ Browser/App
      wget https://github.com/kianmhz/GooseRelayVPN/releases/latest/download/GooseRelayVPN-server-vX.Y.Z-linux-amd64.tar.gz
      tar -xzf GooseRelayVPN-server-vX.Y.Z-linux-amd64.tar.gz
      ```
-   - **ویندوز سرور:** فایل `GooseRelayVPN-server-vX.Y.Z-windows-amd64.zip` را از صفحه Releases دانلود کنید و آن را در پوشه‌ای مثل `C:\goose-relay\` اکسترکت کنید. برای راه‌اندازی سرویس، مرحله ۸ (ویندوز) را ببینید.
+   - **ویندوز سرور:** فایل `GooseRelayVPN-server-vX.Y.Z-windows-amd64.zip` را از صفحه Releases دانلود کنید و آن را در پوشه‌ای مثل `C:\goose-relay\` اکسترکت کنید. برای راه‌اندازی سرویس، زیربخش **Windows Server (NSSM)** در مرحله ۸ را ببینید.
 
    (عدد `vX.Y.Z` را با آخرین نسخه در صفحه Releases جایگزین کنید.)
 
@@ -283,9 +271,11 @@ GOOSE_SERVER_IMAGE=ghcr.io/kianmhz/gooserelayvpn-server:vX.Y.Z docker compose up
 curl http://YOUR.VPS.IP:8443/healthz
 ```
 
-### مرحله ۸: اجرای خودکار سرور بعد از ریبوت (systemd)
+### مرحله ۸: اجرای خودکار سرور بعد از ریبوت
 
-اگر می‌خواهید سرور بعد از ریبوت VPS خودکار بالا بیاید، یک سرویس systemd بسازید.
+اگر می‌خواهید سرور بعد از ریبوت VPS خودکار بالا بیاید، یک سرویس متناسب با OS سرورتان بسازید.
+
+#### Linux (systemd)
 
 روی VPS اجرا کنید:
 
@@ -322,9 +312,9 @@ sudo systemctl start goose-relay
 sudo systemctl status goose-relay --no-pager
 ```
 
-### مرحله ۸ (ویندوز): اجرای خودکار سرور بعد از ریبوت (NSSM)
+#### Windows Server (NSSM)
 
-اگر VPS شما **ویندوز سرور** دارد، به جای systemd از [NSSM](https://nssm.cc) (Non-Sucking Service Manager) استفاده کنید تا `goose-server` را به عنوان یک سرویس ویندوز ثبت کنید. فایل `goose-server.exe` یک باینری ساده Go است و نیازی به نصب ندارد.
+از [NSSM](https://nssm.cc) (Non-Sucking Service Manager) استفاده کنید تا `goose-server` را به عنوان یک سرویس ویندوز ثبت کنید. فایل `goose-server.exe` یک باینری ساده Go است و نیازی به نصب ندارد.
 
 **۱. باز کردن پورت ۸۴۴۳ در فایروال ویندوز** (با دسترسی Administrator در Command Prompt):
 ```cmd
@@ -357,17 +347,51 @@ C:\nssm\win64\nssm.exe remove GooseRelayVPN confirm
 
 ### مرحله ۹: اجرای کلاینت روی کامپیوتر
 
-**Linux/macOS:**
+OS خودتان را انتخاب کنید — کلاینت روی هر چهار سیستم‌عامل دقیقاً یکسان رفتار می‌کند؛ فقط دستور اجرا و چند نکتهٔ خاص هر OS فرق دارد.
+
+#### Linux
+
 ```bash
 ./goose-client -config client_config.json
 ```
 
-**Windows (cmd.exe یا PowerShell):**
+#### macOS
+
+macOS برای هر باینری دانلود شده پرچم `com.apple.quarantine` می‌گذارد، پس بدون پاک کردن آن اولین اجرا با خطای «Apple cannot check it for malicious software» fail می‌شود:
+
+```bash
+xattr -d com.apple.quarantine goose-client 2>/dev/null || true
+chmod +x goose-client
+./goose-client -config client_config.json
+```
+
+> ⚠️ اگر خطای `cannot execute binary file: Exec format error` دیدید، معماری اشتباه را دانلود کرده‌اید. Apple Silicon (M1/M2/M3/M4) به `darwin-arm64` نیاز دارد؛ Macهای Intel قدیمی به `darwin-amd64`.
+
+#### Windows (cmd.exe یا PowerShell)
+
 ```cmd
 .\goose-client.exe -config client_config.json
 ```
 
 > از فرم بک‌اسلش (`.\…`) استفاده کنید. سینتکس یونیکسی `./goose-client.exe` در `cmd.exe` کار نمی‌کند — cmd عبارت `.` را به‌عنوان نام دستور تفسیر می‌کند و خطای `'.' is not recognized as an internal or external command` می‌دهد.
+
+#### Android (Termux)
+
+فایل APK وجود ندارد — کلاینت داخل [Termux](https://termux.dev) اجرا می‌شود. اگر Termux تازه نصب است، قبل از انجام مراحل ۲ تا ۴ آن را آماده کنید:
+
+```bash
+apt update && apt upgrade -y
+pkg install wget tar -y
+```
+
+سپس کلاینت را اجرا کنید:
+
+```bash
+chmod +x goose-client
+./goose-client -config client_config.json
+```
+
+---
 
 باید خروجی‌ای شبیه این ببینید:
 
@@ -380,85 +404,12 @@ CLIENT  INFO    ready: local SOCKS5 is listening on 127.0.0.1:1080
 
 **بررسی pre-flight** در شروع اجرا خودکار انجام می‌شود و مطمئن می‌شود Apps Script قابل دسترسی است، VPS بالا است و کلید AES یکسان است. اگر fail شود، پیام خطا می‌گوید مشکل از کجاست.
 
-حالا مرورگرتان را روی پراکسی SOCKS5 آدرس `127.0.0.1:1080` تنظیم کنید:
+حالا یک اپ را روی پراکسی SOCKS5 آدرس `127.0.0.1:1080` تنظیم کنید:
 
 - **Firefox:** Settings → Network Settings → Manual proxy → SOCKS5 host `127.0.0.1` port `1080`. گزینه **Proxy DNS when using SOCKS v5** را فعال کنید.
 - **Chrome/Edge:** از افزونه‌هایی مثل FoxyProxy یا SwitchyOmega استفاده کنید.
 - **System-wide on macOS/Linux:** SOCKS5 را در تنظیمات شبکه ست کنید.
-
----
-
-## راه‌اندازی macOS
-
-همان باینری `goose-client` که در Linux استفاده می‌شود، با یک نکتهٔ خاص macOS (قرنطینهٔ Gatekeeper). معماری درست را انتخاب کنید: **Apple Silicon (M1/M2/M3/M4)** → `darwin-arm64`؛ **Intel Mac** → `darwin-amd64`.
-
-**۱. دانلود و اکسترکت:**
-```bash
-cd ~/Downloads   # یا هر پوشه‌ای که می‌خواهید
-tar -xzf GooseRelayVPN-client-v1.6.0-darwin-arm64.tar.gz
-cd GooseRelayVPN-client-v1.6.0-darwin-arm64/
-```
-
-**۲. پاک کردن پرچم قرنطینهٔ Gatekeeper.** macOS برای هر باینری دانلود شده `com.apple.quarantine` می‌گذارد؛ اگر این مرحله را رد کنید، اولین اجرا با خطای «Apple cannot check it for malicious software» fail می‌شود:
-```bash
-xattr -d com.apple.quarantine goose-client 2>/dev/null || true
-chmod +x goose-client
-```
-
-**۳. ساخت فایل config:**
-```bash
-cp client_config.example.json client_config.json
-open -e client_config.json   # در TextEdit باز می‌شود
-```
-`script_keys` (شناسهٔ deployment) و `tunnel_key` را پر کنید، سیو کنید، ببندید.
-
-**۴. اجرای کلاینت:**
-```bash
-./goose-client
-```
-وقتی پیام `ready: local SOCKS5 is listening on 127.0.0.1:1080` را دیدید کار می‌کند. پنجرهٔ Terminal را باز نگه دارید.
-
-> ⚠️ اگر خطای `cannot execute binary file: Exec format error` دیدید، معماری اشتباه را دانلود کرده‌اید. Apple Silicon به `darwin-arm64` نیاز دارد؛ Macهای Intel قدیمی به `darwin-amd64`.
-
----
-
-## راه‌اندازی اندروید (Termux)
-
-کلاینت اندروید داخل [Termux](https://termux.dev) اجرا می‌شود — فایل APK وجود ندارد. مراحل زیر را دنبال کنید:
-
-**۱. نصب و آماده‌سازی Termux:**
-```bash
-apt update && apt upgrade -y
-pkg install wget tar -y
-```
-
-**۲. دانلود و استخراج کلاینت:**
-```bash
-wget https://github.com/Kianmhz/GooseRelayVPN/releases/latest/download/GooseRelayVPN-client-v1.6.0-android-arm64.tar.gz
-tar -xzvf GooseRelayVPN-client-v1.6.0-android-arm64.tar.gz
-cd GooseRelayVPN-client-v1.6.0-android-arm64/
-chmod +x goose-client
-```
-
-**۳. ساخت کانفیگ:**
-```bash
-cp client_config.example.json client_config.json
-nano client_config.json
-```
-`script_keys` و `tunnel_key` را پر کنید و با Ctrl+X ذخیره کنید.
-
-**۴. اجرای کلاینت:**
-```bash
-./goose-client -config client_config.json
-```
-
-وقتی `ready: local SOCKS5 is listening on 127.0.0.1:1080` را دیدید یعنی همه چیز درست است.
-
-**۵. اتصال اپ‌ها:**
-
-از یک اپ با پشتیبانی SOCKS5 برای روت کردن ترافیک از طریق `127.0.0.1:1080` استفاده کنید. [NekoBox](https://github.com/MatsuriDayo/NekoBoxForAndroid) و [v2rayNG](https://github.com/2dust/v2rayNG) هر دو خوب کار می‌کنند:
-- یک پروکسی SOCKS5 به آدرس `127.0.0.1:1080` اضافه کنید
-- در **per-app settings**، پروکسی را برای اپ‌های دلخواه فعال کنید و **Termux را از VPN خارج کنید** تا تونل قطع نشود
+- **Android:** از یک اپ با پشتیبانی SOCKS5 مثل [NekoBox](https://github.com/MatsuriDayo/NekoBoxForAndroid) یا [v2rayNG](https://github.com/2dust/v2rayNG) استفاده کنید. در **per-app settings**، پراکسی را برای اپ‌های دلخواه فعال کنید و **Termux را از VPN خارج کنید** تا تونل قطع نشود.
 
 ---
 
@@ -712,9 +663,39 @@ bash bench/bench.sh --update <ref>   # مثلاً --update v1.3.0 یا --update 
 
 ---
 
+## حمایت از پروژه
+
+اگر این پروژه را دوست دارید، لطفاً با ستاره دادن در GitHub (⭐) از آن حمایت کنید. این کار باعث دیده شدن پروژه می‌شود.
+
+اگر تمایل دارید، می‌توانید به صورت مالی هم حمایت کنید:
+
+- TRX / USDT TRC20:
+  `TSxg2WAXYnkoR2UiUTzCxbmqNARAt91aqB`
+- BNB / USDT BEP20:
+  `0xe7b48d8fd5fbbb4e3fa9a06723a62a88585139ea`
+- TON:
+  `UQDBzJqzJ5e7uZFPrmarTRSGGbD1UoFK2q5_jWh4D2nnNdUB`
+
+---
+
+## سلب مسئولیت
+
+GooseRelayVPN فقط برای اهداف آموزشی، تست و پژوهش ارائه شده است.
+
+- **بدون ضمانت:** این نرم‌افزار به‌صورت "همان‌گونه که هست" ارائه می‌شود و هیچ ضمانت صریح یا ضمنی، از جمله قابلیت فروش، مناسب بودن برای هدف خاص یا عدم نقض حقوق دیگران، برای آن وجود ندارد.
+- **محدودیت مسئولیت:** توسعه‌دهندگان و مشارکت‌کنندگان مسئول هیچ خسارت مستقیم، غیرمستقیم، اتفاقی، تبعی یا هر نوع خسارت ناشی از استفاده از این پروژه نیستند.
+- **مسئولیت کاربر:** اجرای این پروژه خارج از محیط‌های کنترل‌شده ممکن است بر شبکه‌ها، حساب‌ها یا سیستم‌های متصل اثر بگذارد. تمام مسئولیت نصب، پیکربندی و استفاده بر عهده کاربر است.
+- **رعایت قوانین:** پیش از استفاده، رعایت تمام قوانین محلی، کشوری و بین‌المللی بر عهده کاربر است.
+- **رعایت قوانین گوگل:** اگر از Google Apps Script در این پروژه استفاده می‌کنید، رعایت Terms of Service گوگل، قوانین استفاده مجاز، سهمیه‌ها و سیاست‌های پلتفرم بر عهده شماست. سوءاستفاده ممکن است باعث تعلیق حساب گوگل یا deployment شما شود.
+- **شرایط مجوز:** استفاده، کپی، توزیع و تغییر فقط تحت شرایط مجوز مخزن مجاز است. هر استفاده خارج از آن شرایط ممنوع است.
+
+---
+
 ## Special Thanks
 
 Special thanks to [@abolix](https://github.com/abolix) for making this project possible.
+
+این پروژه از ایدهٔ مخزن [masterking32/MasterHttpRelayVPN](https://github.com/masterking32/MasterHttpRelayVPN) الهام گرفته است.
 
 ## License
 

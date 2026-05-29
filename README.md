@@ -35,41 +35,27 @@ A SOCKS5 VPN that tunnels **raw TCP** through a Google Apps Script web app to yo
 
 > ⚠️ **You need a small VPS for the exit server.** Unlike pure-Apps-Script proxies, this project tunnels raw TCP — anything SOCKS5 can carry — so a real `net.Dial` has to happen somewhere. A small $4/month VPS is plenty. In exchange you can tunnel SSH, IMAP, custom protocols, anything — not just HTTP.
 
-## Support This Project
+<details>
+<summary><b>📖 Table of Contents</b></summary>
 
-If you like this project, please consider starring it on GitHub (⭐). It helps the project get discovered.
+- [How It Works](#how-it-works)
+- [Step-by-Step Setup Guide](#step-by-step-setup-guide)
+- [LAN Sharing (Optional)](#lan-sharing-optional)
+- [Increase capacity with multiple deployments (recommended)](#increase-capacity-with-multiple-deployments-recommended)
+- [Configuration](#configuration)
+- [Updating](#updating)
+- [Architecture](#architecture)
+- [Threat model](#threat-model)
+- [Project Files](#project-files)
+- [Troubleshooting](#troubleshooting)
+- [Security Tips](#security-tips)
+- [Contributing](#contributing)
+- [Support This Project](#support-this-project)
+- [Disclaimer](#disclaimer)
+- [Special Thanks](#special-thanks)
+- [License](#license)
 
-You can also support the project financially:
-
-- TRX / USDT TRC20:
-  `TSxg2WAXYnkoR2UiUTzCxbmqNARAt91aqB`
-- BNB / USDT BEP20:
-  `0xe7b48d8fd5fbbb4e3fa9a06723a62a88585139ea`
-- TON:
-  `UQDBzJqzJ5e7uZFPrmarTRSGGbD1UoFK2q5_jWh4D2nnNdUB`
-
-## Important Notes
-
-- Never share `tunnel_key` with anyone. Anyone with this key can use your tunnel/VPS as if they are you.
-- A server with public internet access is required. Your exit server must be reachable from Google Apps Script.
-- Each Google account has a UrlFetch quota of about 20,000 executions per day on Apps Script's free tier (shared across every deployment under that account — it is **not** per deployment). The quota resets at midnight Pacific (~10:30 AM Iran time in summer, ~11:30 AM in winter).
-- You do not need to install a local MITM certificate in this project. The certificate setup in `MasterHttpRelayVPN` is for that project's architecture and is not required here.
-- This project was inspired by the idea in the main repository: https://github.com/masterking32/MasterHttpRelayVPN
-
----
-
-## Disclaimer
-
-GooseRelayVPN is provided for educational, testing, and research purposes only.
-
-- **Provided without warranty:** This software is provided "AS IS", without express or implied warranty, including merchantability, fitness for a particular purpose, and non-infringement.
-- **Limitation of liability:** The developers and contributors are not responsible for any direct, indirect, incidental, consequential, or other damages resulting from the use of this project.
-- **User responsibility:** Running this project outside controlled test environments may affect networks, accounts, or connected systems. You are solely responsible for installation, configuration, and use.
-- **Legal compliance:** You are responsible for complying with all local, national, and international laws and regulations before using this software.
-- **Google services compliance:** If you use Google Apps Script with this project, you are responsible for complying with Google's Terms of Service, acceptable-use rules, quotas, and platform policies. Misuse may lead to suspension of your Google account or deployment.
-- **License terms:** Use, copying, distribution, and modification are governed by the repository license. Any use outside those terms is prohibited.
-
----
+</details>
 
 ## How It Works
 
@@ -84,6 +70,8 @@ Browser/App
 ```
 
 Your application sends TCP bytes through the SOCKS5 listener on your computer. The client groups them into batches of frames, **Zstandard-compresses** each batch (for compressible traffic such as plain HTTP or JSON APIs this reduces the body size by up to 65%, keeping you further from Apps Script's daily quota limits), then seals the whole batch under a single **AES-256-GCM** envelope and POSTs it over a domain-fronted HTTPS connection to your Apps Script web app. The Apps Script is a ~30-line script that forwards the body verbatim to your VPS — it never decrypts and the AES key never touches Google. Your VPS decrypts, dials the real target, and pumps bytes back along the same path. The filter sees only TLS to Google.
+
+> **Apps Script daily quota.** Each Google account has a UrlFetch quota of about 20,000 executions per day on the free tier — shared across every deployment under that account, **not** per deployment. The quota resets at midnight Pacific (≈10:30 AM Iran time in summer, ≈11:30 AM in winter). The Zstd compression above is what stretches that quota the furthest.
 
 ---
 
@@ -122,7 +110,7 @@ You need two separate programs:
      wget https://github.com/kianmhz/GooseRelayVPN/releases/latest/download/GooseRelayVPN-server-vX.Y.Z-linux-amd64.tar.gz
      tar -xzf GooseRelayVPN-server-vX.Y.Z-linux-amd64.tar.gz
      ```
-   - **Windows Server:** download `GooseRelayVPN-server-vX.Y.Z-windows-amd64.zip` from the Releases page and extract it to a folder such as `C:\goose-relay\`. See Step 8 (Windows) below for service setup.
+   - **Windows Server:** download `GooseRelayVPN-server-vX.Y.Z-windows-amd64.zip` from the Releases page and extract it to a folder such as `C:\goose-relay\`. See the **Windows Server (NSSM)** subsection of Step 8 below for service setup.
 
    (Replace `vX.Y.Z` with the latest version number from the Releases page.)
 
@@ -281,9 +269,11 @@ Verify from your own computer:
 curl http://YOUR.VPS.IP:8443/healthz
 ```
 
-### Step 8: Keep the server running after reboot (systemd)
+### Step 8: Keep the server running after reboot
 
-If you want the exit server to start automatically after a VPS reboot, create a systemd service.
+If you want the exit server to start automatically after a VPS reboot, set up a service for your VPS OS.
+
+#### Linux (systemd)
 
 Run on your VPS:
 
@@ -320,9 +310,9 @@ sudo systemctl start goose-relay
 sudo systemctl status goose-relay --no-pager
 ```
 
-### Step 8 (Windows): Keep the server running after reboot (NSSM)
+#### Windows Server (NSSM)
 
-If your VPS runs **Windows Server**, use [NSSM](https://nssm.cc) (Non-Sucking Service Manager) to register `goose-server` as a Windows service instead of systemd. The `goose-server.exe` binary is a plain Go binary — no installer needed.
+Use [NSSM](https://nssm.cc) (Non-Sucking Service Manager) to register `goose-server` as a Windows service. The `goose-server.exe` binary is a plain Go binary — no installer needed.
 
 **1. Open port 8443 in Windows Firewall** (run as Administrator in Command Prompt):
 ```cmd
@@ -355,17 +345,51 @@ C:\nssm\win64\nssm.exe remove GooseRelayVPN confirm
 
 ### Step 9: Run the client on your computer
 
-**Linux/macOS:**
+Pick your OS — the client behaves identically on all four; only the launch command and a couple of OS-specific quirks differ.
+
+#### Linux
+
 ```bash
 ./goose-client -config client_config.json
 ```
 
-**Windows (cmd.exe or PowerShell):**
+#### macOS
+
+macOS marks every downloaded binary with `com.apple.quarantine`, so the first run fails with "Apple cannot check it for malicious software" unless you clear it:
+
+```bash
+xattr -d com.apple.quarantine goose-client 2>/dev/null || true
+chmod +x goose-client
+./goose-client -config client_config.json
+```
+
+> ⚠️ If you see `cannot execute binary file: Exec format error`, you downloaded the wrong architecture. Apple Silicon (M1/M2/M3/M4) needs `darwin-arm64`; older Intel Macs need `darwin-amd64`.
+
+#### Windows (cmd.exe or PowerShell)
+
 ```cmd
 .\goose-client.exe -config client_config.json
 ```
 
 > Use the backslash form (`.\…`). The Unix-style `./goose-client.exe` does not work in `cmd.exe` — it tries to run a command literally named `.` and prints `'.' is not recognized as an internal or external command`.
+
+#### Android (Termux)
+
+There is no APK — the client runs inside [Termux](https://termux.dev). If this is a fresh Termux install, bootstrap it before doing Steps 2–4:
+
+```bash
+apt update && apt upgrade -y
+pkg install wget tar -y
+```
+
+Then run the client:
+
+```bash
+chmod +x goose-client
+./goose-client -config client_config.json
+```
+
+---
 
 You should see output like this:
 
@@ -378,85 +402,12 @@ CLIENT  INFO    ready: local SOCKS5 is listening on 127.0.0.1:1080
 
 The **pre-flight check** runs automatically at startup and verifies that Apps Script is reachable, the VPS is up, and the AES key matches. If it fails, the message tells you what went wrong.
 
-Now set your browser to use SOCKS5 proxy `127.0.0.1:1080`:
+Now point an app at SOCKS5 proxy `127.0.0.1:1080`:
 
 - **Firefox:** Settings → Network Settings → Manual proxy → SOCKS5 host `127.0.0.1` port `1080`. Check **Proxy DNS when using SOCKS v5**.
 - **Chrome/Edge:** Use an extension like FoxyProxy or SwitchyOmega.
 - **System-wide on macOS/Linux:** Set SOCKS5 in network settings.
-
----
-
-## macOS Setup
-
-The same `goose-client` binary as Linux, with one macOS-specific quirk (Gatekeeper quarantine). Pick the right architecture: **Apple Silicon (M1/M2/M3/M4)** → `darwin-arm64`; **Intel Mac** → `darwin-amd64`.
-
-**1. Download and extract:**
-```bash
-cd ~/Downloads   # or wherever you want it
-tar -xzf GooseRelayVPN-client-v1.6.0-darwin-arm64.tar.gz
-cd GooseRelayVPN-client-v1.6.0-darwin-arm64/
-```
-
-**2. Clear the Gatekeeper quarantine flag.** macOS marks every downloaded binary with `com.apple.quarantine`; if you skip this, the first run fails with "Apple cannot check it for malicious software":
-```bash
-xattr -d com.apple.quarantine goose-client 2>/dev/null || true
-chmod +x goose-client
-```
-
-**3. Create your config:**
-```bash
-cp client_config.example.json client_config.json
-open -e client_config.json   # opens in TextEdit
-```
-Fill in your `script_keys` (deployment ID) and `tunnel_key`, save, close.
-
-**4. Run the client:**
-```bash
-./goose-client
-```
-When you see `ready: local SOCKS5 is listening on 127.0.0.1:1080` it's working. Leave the Terminal window open.
-
-> ⚠️ If you get `cannot execute binary file: Exec format error`, you downloaded the wrong architecture. Apple Silicon needs `darwin-arm64`; older Intel Macs need `darwin-amd64`.
-
----
-
-## Android Setup (Termux)
-
-The Android client runs inside [Termux](https://termux.dev) — there is no APK. Follow these steps:
-
-**1. Install and set up Termux:**
-```bash
-apt update && apt upgrade -y
-pkg install wget tar -y
-```
-
-**2. Download and extract the client:**
-```bash
-wget https://github.com/Kianmhz/GooseRelayVPN/releases/latest/download/GooseRelayVPN-client-v1.6.0-android-arm64.tar.gz
-tar -xzvf GooseRelayVPN-client-v1.6.0-android-arm64.tar.gz
-cd GooseRelayVPN-client-v1.6.0-android-arm64/
-chmod +x goose-client
-```
-
-**3. Create your config:**
-```bash
-cp client_config.example.json client_config.json
-nano client_config.json
-```
-Fill in your `script_keys` and `tunnel_key`, then save with Ctrl+X.
-
-**4. Run the client:**
-```bash
-./goose-client -config client_config.json
-```
-
-When you see `ready: local SOCKS5 is listening on 127.0.0.1:1080` it's working.
-
-**5. Connect your apps:**
-
-Use a SOCKS5-aware app to route traffic through `127.0.0.1:1080`. [NekoBox](https://github.com/MatsuriDayo/NekoBoxForAndroid) and [v2rayNG](https://github.com/2dust/v2rayNG) both work well:
-- Add a SOCKS5 proxy pointing to `127.0.0.1:1080`
-- In **per-app settings**, enable the proxy for the apps you want and **exclude Termux** from the VPN so the tunnel itself stays connected
+- **Android:** Use a SOCKS5-aware app like [NekoBox](https://github.com/MatsuriDayo/NekoBoxForAndroid) or [v2rayNG](https://github.com/2dust/v2rayNG). In **per-app settings**, enable the proxy for the apps you want and **exclude Termux** so the tunnel itself stays connected.
 
 ---
 
@@ -716,9 +667,39 @@ bash bench/bench.sh --update <ref>   # e.g. --update v1.3.0 or --update HEAD
 
 ---
 
+## Support This Project
+
+If you like this project, please consider starring it on GitHub (⭐). It helps the project get discovered.
+
+You can also support the project financially:
+
+- TRX / USDT TRC20:
+  `TSxg2WAXYnkoR2UiUTzCxbmqNARAt91aqB`
+- BNB / USDT BEP20:
+  `0xe7b48d8fd5fbbb4e3fa9a06723a62a88585139ea`
+- TON:
+  `UQDBzJqzJ5e7uZFPrmarTRSGGbD1UoFK2q5_jWh4D2nnNdUB`
+
+---
+
+## Disclaimer
+
+GooseRelayVPN is provided for educational, testing, and research purposes only.
+
+- **Provided without warranty:** This software is provided "AS IS", without express or implied warranty, including merchantability, fitness for a particular purpose, and non-infringement.
+- **Limitation of liability:** The developers and contributors are not responsible for any direct, indirect, incidental, consequential, or other damages resulting from the use of this project.
+- **User responsibility:** Running this project outside controlled test environments may affect networks, accounts, or connected systems. You are solely responsible for installation, configuration, and use.
+- **Legal compliance:** You are responsible for complying with all local, national, and international laws and regulations before using this software.
+- **Google services compliance:** If you use Google Apps Script with this project, you are responsible for complying with Google's Terms of Service, acceptable-use rules, quotas, and platform policies. Misuse may lead to suspension of your Google account or deployment.
+- **License terms:** Use, copying, distribution, and modification are governed by the repository license. Any use outside those terms is prohibited.
+
+---
+
 ## Special Thanks
 
 Special thanks to [@abolix](https://github.com/abolix) for making this project possible.
+
+This project was inspired by the idea in [masterking32/MasterHttpRelayVPN](https://github.com/masterking32/MasterHttpRelayVPN).
 
 ## License
 
